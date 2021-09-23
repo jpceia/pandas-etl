@@ -82,7 +82,12 @@ def apply_save(df, instructions):
     fname = instructions["fname"]
     args = instructions.get("args", [])
     kwargs = instructions.get("kwargs", {})
-    df.to_csv(fname, *args, **kwargs)
+    _, ext = os.path.splitext(fname)
+    if ext == ".csv":
+        df.to_csv(fname, *args, **kwargs)
+    else:
+        raise ValueError("Unsuported extension: {}".format(ext))
+    return df
 
 
 def apply_instructions(df, instructions):
