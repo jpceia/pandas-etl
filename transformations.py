@@ -23,8 +23,8 @@ def text_contains_all(col, *args):
     return col
 
 
-def is_equal(col, *args):
-    return col == args[0]
+def is_equal(col, value):
+    return col == value
 
 
 def contains(col, *args):
@@ -35,16 +35,12 @@ def notnull(col):
     return col.notnull()
 
 
-def between(col, **kwargs):
-    assert "min" in kwargs
-    assert "max" in kwargs
-    a = kwargs["min"]
-    b = kwargs["max"]
-    return (col > a) & (col < b)
+def between(col, min, max):
+    return (col > min) & (col < max)
 
 
-def greater_than(col, *args):
-    return col > args[0]
+def greater_than(col, value):
+    return col > value
 
 
 def explode_dictionary(col):
