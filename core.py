@@ -2,6 +2,7 @@ import os
 import gc
 import json
 import pandas as pd
+import transformations
 from pprint import pprint
 
 
@@ -38,17 +39,23 @@ def apply_remove_columns(df, instructions):
     return df.drop(cols, axis=1)
 
 
+def load_func(script):
+    if isinstance(script, str):
+        return getattr(transformations, script)
+    assert len(script) == 2
+    fname, ext = os.path.splitext(script[0])
+    lib_path = fname.replace('/', '.')
+    lib = __import__(lib_path)
+    return getattr(lib, script[1])
+
+
 def apply_transform_column(df, instructions):
     assert "columns" in instructions
     assert "script" in instructions
     assert "result" in instructions
     cols = instructions["columns"]
     res = instructions["result"]
-    script = instructions["script"]
-    fname, ext = os.path.splitext(script[0])
-    lib_path = fname.replace('/', '.')
-    lib = __import__(lib_path)
-    func = getattr(lib, script[1])
+    func = load_func(instructions["script"])
     args = instructions.get("args", [])
     kwargs = instructions.get("kwargs", {})
     if not isinstance(args, list):
@@ -61,13 +68,7 @@ def apply_filter_rows(df, instructions):
     assert "columns" in instructions
     assert "script" in instructions
     cols = instructions["columns"]
-    script = instructions["script"]
-    assert len(script) == 2
-    fname, ext = os.path.splitext(script[0])
-    assert ext == ".py"
-    lib_path = fname.replace('/', '.')
-    lib = __import__(lib_path)
-    func = getattr(lib, script[1])
+    func = load_func(instructions["script"])
     args = instructions.get("args", [])
     kwargs = instructions.get("kwargs", {})
     if not isinstance(args, list):
