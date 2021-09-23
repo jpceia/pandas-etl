@@ -44,4 +44,4 @@ def greater_than(col, value):
 
 
 def explode_dictionary(col):
-    return col.apply(pd.Series)
+    return pd.DataFrame(col.tolist(), index=col.index)
