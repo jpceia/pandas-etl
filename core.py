@@ -123,3 +123,5 @@ def apply_pipeline(df, config, verbose=True):
             pprint(instructions)
         df = apply_instructions(df, instructions)
         gc.collect()
+    return df
+
