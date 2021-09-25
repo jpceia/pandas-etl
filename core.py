@@ -91,7 +91,6 @@ def apply_save(df, instructions):
 
 
 def apply_instructions(df, instructions):
-    pprint(instructions)
     assert "action" in instructions
     action = instructions["action"]
     if action == "filter_columns":
@@ -113,12 +112,14 @@ def apply_instructions(df, instructions):
     raise ValueError("Unknown action type: %s" % action)
 
 
-def apply_pipeline(df, config, **kwargs):
+def apply_pipeline(df, config, verbose=True):
     if isinstance(config, str):
         with open(config) as f:
             config = json.load(f)
     elif not isinstance(config, list):
         raise ValueError("Invalid argument")
     for instructions in config:
+        if verbose:
+            pprint(instructions)
         df = apply_instructions(df, instructions)
         gc.collect()
