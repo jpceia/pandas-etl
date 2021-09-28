@@ -79,18 +79,31 @@ def apply_drop_duplicates(df, instructions):
 
 
 def apply_transform(df, instructions):
-    assert "columns" in instructions
-    assert "script" in instructions
-    assert "result" in instructions
-    cols = instructions["columns"]
-    res = instructions["result"]
-    func = _load_func(instructions["script"])
+    assert "input" in instructions
+    assert "function" in instructions
+    input_cols = instructions["input"]
+    func = _load_func(instructions["function"])
     args = instructions.get("args", [])
     kwargs = instructions.get("kwargs", {})
     if not isinstance(args, list):
         args = [args]
-    df[res] = func(df[cols], *args, **kwargs)
-    return df
+    df_res = func(df[input_cols], *args, **kwargs)
+    print(df_res)
+    # replace column names if "output" variable is present
+    if "output" in instructions:
+        _rename_columns(df_res, instructions["output"])
+
+    result = instructions.get("result", "append")
+    if result == "replace_input":
+        df.drop(input_cols, axis=1)
+        result = "append"
+
+    if result == "append":
+        return _join_dataframes(df, df_res)
+    elif result == "replace_all":
+        return df_res
+    else:
+        raise ValueError("result: append (default) | replace_input | replace_all")
 
 
 def apply_filter_rows(df, instructions):
