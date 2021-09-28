@@ -95,7 +95,7 @@ def apply_transform(df, instructions):
 
     result = instructions.get("result", "append")
     if result == "replace_input":
-        df.drop(input_cols, axis=1)
+        df = df.drop(input_cols, axis=1)
         result = "append"
 
     if result == "append":
