@@ -6,47 +6,75 @@ import transformations
 from pprint import pprint
 
 
-
-def apply_filter_columns(df, instructions):
-    assert "columns" in instructions
-    cols = instructions["columns"]
-    return df[cols]
-
-
-def apply_rename_column(df, instructions):
-    assert "column" in instructions
-    assert "result" in instructions
-    col = instructions["column"]
-    res = instructions["result"]
-    return df.rename(columns={col: res})
+def _pick_col_names(instructions):
+    if "columns" in instructions:
+        return instructions["columns"]
+    elif "column" in instructions:
+        return instructions["column"]
+    raise ValueError("Column(s) label not available")
 
 
-def apply_drop_duplicates(df, instructions):
-    assert "columns" in instructions
-    cols = instructions["columns"]
-    return df.drop_duplicates(cols)
+# aux function
+def _load_func(path):
+    if isinstance(path, str):
+        return getattr(transformations, path)
+    assert len(path) == 2
+    fname, ext = os.path.splitext(path[0])
+    lib_path = fname.replace('/', '.')
+    lib = __import__(lib_path)
+    return getattr(lib, path[1])
 
+
+def _rename_columns(df, cols):
+    if isinstance(df, pd.Series):
+        if isinstance(cols, str):
+            df.name = cols
+        elif isinstance(cols, list):
+            assert len(cols) == 1
+            df.name = cols[0]
+        else:
+            raise ValueError
+    elif isinstance(df, pd.DataFrame):
+        if isinstance(cols, str):
+            cols = [cols]
+        df.columns = cols
+    else:
+        raise ValueError
+
+
+def _join_dataframes(df1, df2):
+    if isinstance(df1, pd.Series):
+        df1 = df1.to_frame()
+    if isinstance(df2, pd.Series):
+        df2 = df2.to_frame()
+    df = pd.concat([df1, df2], axis=1)
+    return df.loc[:,~df.columns.duplicated(keep='last')]
 
 def apply_set_index(df, instructions):
     assert "column" in instructions
     index_col = instructions["column"]
     return df.set_index(index_col)
 
+def apply_filter_columns(df, instructions):
+    return df[_pick_col_names(instructions)]
+
+
+def apply_rename_column(df, instructions):
+    assert "old" in instructions
+    assert "new" in instructions
+    col_old = instructions["old"]
+    col_new = instructions["new"]
+    return df.rename(columns={col_old: col_new})
+
 
 def apply_remove_columns(df, instructions):
-    assert "columns" in instructions
-    cols = instructions["columns"]
+    cols = _pick_col_names(instructions)
     return df.drop(cols, axis=1)
 
 
-def load_func(script):
-    if isinstance(script, str):
-        return getattr(transformations, script)
-    assert len(script) == 2
-    fname, ext = os.path.splitext(script[0])
-    lib_path = fname.replace('/', '.')
-    lib = __import__(lib_path)
-    return getattr(lib, script[1])
+def apply_drop_duplicates(df, instructions):
+    cols = _pick_col_names(instructions)
+    return df.drop_duplicates(cols)
 
 
 def apply_transform_column(df, instructions):
@@ -55,7 +83,7 @@ def apply_transform_column(df, instructions):
     assert "result" in instructions
     cols = instructions["columns"]
     res = instructions["result"]
-    func = load_func(instructions["script"])
+    func = _load_func(instructions["script"])
     args = instructions.get("args", [])
     kwargs = instructions.get("kwargs", {})
     if not isinstance(args, list):
@@ -68,7 +96,7 @@ def apply_filter_rows(df, instructions):
     assert "columns" in instructions
     assert "script" in instructions
     cols = instructions["columns"]
-    func = load_func(instructions["script"])
+    func = _load_func(instructions["script"])
     args = instructions.get("args", [])
     kwargs = instructions.get("kwargs", {})
     if not isinstance(args, list):
