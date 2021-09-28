@@ -51,9 +51,9 @@ def _join_dataframes(df1, df2):
     return df.loc[:,~df.columns.duplicated(keep='last')]
 
 def apply_set_index(df, instructions):
-    assert "column" in instructions
-    index_col = instructions["column"]
-    return df.set_index(index_col)
+    cols = _pick_col_names(instructions)
+    return df.set_index(cols)
+
 
 def apply_select_columns(df, instructions):
     return df[_pick_col_names(instructions)]
@@ -77,7 +77,7 @@ def apply_drop_duplicates(df, instructions):
     return df.drop_duplicates(cols)
 
 
-def apply_transform_column(df, instructions):
+def apply_transform(df, instructions):
     assert "columns" in instructions
     assert "script" in instructions
     assert "result" in instructions
