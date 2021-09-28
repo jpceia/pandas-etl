@@ -55,7 +55,7 @@ def apply_set_index(df, instructions):
     index_col = instructions["column"]
     return df.set_index(index_col)
 
-def apply_filter_columns(df, instructions):
+def apply_select_columns(df, instructions):
     return df[_pick_col_names(instructions)]
 
 
@@ -121,8 +121,8 @@ def apply_save(df, instructions):
 def apply_instructions(df, instructions):
     assert "action" in instructions
     action = instructions["action"]
-    if action == "filter_columns":
-        return apply_filter_columns(df, instructions)
+    if action == "select_columns":
+        return apply_select_columns(df, instructions)
     elif action == "filter_rows":
         return apply_filter_rows(df, instructions)
     elif action == "rename_column":
@@ -131,10 +131,12 @@ def apply_instructions(df, instructions):
         return apply_drop_duplicates(df, instructions)
     elif action == "set_index":
         return apply_set_index(df, instructions)
-    elif action == "transform_column":
-        return apply_transform_column(df, instructions)
+    elif action == "transform":
+        return apply_transform(df, instructions)
     elif action == "remove_columns":
         return apply_remove_columns(df, instructions)
+    elif action == "log":
+        return apply_log(df, instructions)
     elif action == "save":
         return apply_save(df, instructions)
     raise ValueError("Unknown action type: %s" % action)
