@@ -50,6 +50,7 @@ def _join_dataframes(df1, df2):
     df = pd.concat([df1, df2], axis=1)
     return df.loc[:,~df.columns.duplicated(keep='last')]
 
+
 def apply_set_index(df, instructions):
     cols = _pick_col_names(instructions)
     return df.set_index(cols)
@@ -93,15 +94,16 @@ def apply_transform(df, instructions):
 
 
 def apply_filter_rows(df, instructions):
-    assert "columns" in instructions
-    assert "script" in instructions
-    cols = instructions["columns"]
-    func = _load_func(instructions["script"])
-    args = instructions.get("args", [])
-    kwargs = instructions.get("kwargs", {})
-    if not isinstance(args, list):
-        args = [args]
-    filt = func(df[cols], *args, **kwargs)
+    assert "condition" in instructions
+    condition = instructions["condition"]
+    if isinstance(condition, str):
+        filt = df[condition]
+    elif isinstance(condition, dict):
+        condition["result"] = "replace_all"
+        filt = apply_transform(df, condition)
+        assert isinstance(filt, pd.Series)
+    else:
+        raise ValueError
     return df[filt]
 
 
@@ -155,3 +157,10 @@ def apply_pipeline(df, config, verbose=True):
         gc.collect()
     return df
 
+
+def config_check_actions(config, allowed_actions=None):
+    for instructions in config:
+        assert "action" in instructions
+        action = instructions["action"]
+        if not action in allowed_actions:
+            raise ValueError("Invalid action in pipeline: {}".format(action))
