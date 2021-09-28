@@ -120,6 +120,14 @@ def apply_filter_rows(df, instructions):
     return df[filt]
 
 
+def apply_log(df, instructions):
+    print(df)
+    print("Column list:")
+    for c in df.columns:
+        print("\t", c)
+    return df
+
+
 def apply_save(df, instructions):
     assert "fname" in instructions
     fname = instructions["fname"]
